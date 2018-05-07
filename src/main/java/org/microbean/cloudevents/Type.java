@@ -16,6 +16,9 @@
  */
 package org.microbean.cloudevents;
 
+import org.microbean.development.annotation.Experimental;
+
+@Experimental
 public enum Type {
 
   STRING,

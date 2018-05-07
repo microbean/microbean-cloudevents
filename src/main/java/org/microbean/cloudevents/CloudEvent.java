@@ -51,6 +51,10 @@ public class CloudEvent extends EventObject {
    */
   private static final long serialVersionUID = 1L;
 
+  private static final Object UNKNOWN_PUBLISHER = new Object();
+
+  private volatile Object publisher;
+
   private final String cloudEventsVersion;
 
   /**
@@ -99,6 +103,20 @@ public class CloudEvent extends EventObject {
                     final Object data) {
     this(publisher, cloudEventsVersion, eventType, eventTypeVersion, source, eventID, eventTime, null, null, null, data);
   }
+
+  public CloudEvent(final String cloudEventsVersion,
+                    final String eventType,
+                    final String eventTypeVersion,
+                    final URI source,
+                    final String eventID,
+                    final Instant eventTime,
+                    final Map<? extends String, ?> extensions,
+                    final String contentType,
+                    final URI schemaURL,
+                    final Object data) {
+    this(null, cloudEventsVersion, eventType, eventTypeVersion, source, eventID, eventTime, extensions, contentType, schemaURL, data);
+  }
+  
   public CloudEvent(final Object publisher,
                     final String cloudEventsVersion,
                     final String eventType,
@@ -110,7 +128,7 @@ public class CloudEvent extends EventObject {
                     final String contentType,
                     final URI schemaURL,
                     final Object data) {
-    super(publisher);
+    super(publisher == null ? UNKNOWN_PUBLISHER : publisher);
     this.cloudEventsVersion = Objects.requireNonNull(cloudEventsVersion);
     if (cloudEventsVersion.isEmpty()) {
       throw new IllegalArgumentException("cloudEventsVersion: ");
@@ -146,7 +164,26 @@ public class CloudEvent extends EventObject {
   }
 
   public final Object getPublisher() {
-    return super.getSource();
+    Object returnValue;
+    final Object publisher = this.publisher;
+    if (publisher == null) {
+      returnValue = super.getSource();
+      if (returnValue == UNKNOWN_PUBLISHER) {
+        returnValue = null;
+      }
+    } else {
+      returnValue = publisher;
+    }
+    return returnValue;
+  }
+
+  public final void setPublisher(final Object publisher) {
+    Objects.requireNonNull(publisher);
+    final Object existingPublisher = this.getPublisher();
+    if (existingPublisher != null && existingPublisher != UNKNOWN_PUBLISHER) {
+      throw new IllegalStateException();
+    }
+    this.publisher = publisher;
   }
   
   public final String getCloudEventsVersion() {
